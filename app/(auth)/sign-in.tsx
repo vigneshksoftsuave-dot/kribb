@@ -22,88 +22,107 @@ export default function SignIn() {
 
   const isLoading = fetchStatus === "fetching";
 
-  //   const onSignUp = async () => {
-  //     const { error } = await signUp.password({
-  //       emailAddress: email,
-  //       password: password,
-  //       firstName: firstName,
-  //       lastName: lastName,
-  //     });
+  const onSignIn = async () => {
+    const { error } = await signIn.password({
+      emailAddress: email,
+      password: password,
+    });
 
-  //     if (error) {
-  //       console.log(JSON.stringify(error));
-  //     }
+    if (error) {
+      alert(error.message);
+      return;
+    }
 
-  //     if (!error) await signUp.verifications.sendEmailCode();
-  //   };
+    if (signIn.status === "complete") {
+      await signIn.finalize({
+        navigate: ({ session, decorateUrl }) => {
+          if (session?.currentTask) {
+            return;
+          }
+          const url = decorateUrl("/");
+          router.replace(url as any);
+        },
+      });
+    } else if (signIn.status === "needs_second_factor") {
+      await signIn.mfa.sendPhoneCode();
+    } else if (signIn.status === "needs_client_trust") {
+      const emailCodefactor = signIn.supportedSecondFactors.find(
+        (factor) => factor.strategy === "email_code",
+      );
+      if (emailCodefactor) {
+        await signIn.mfa.sendEmailCode();
+      }
+    } else {
+      console.log(`Sign-in incomplete: ${signIn.status}`);
+    }
+  };
 
-  //   const onVerifyCode = async () => {
-  //     await signUp.verifications.verifyEmailCode({
-  //       code,
-  //     });
+  const onVerifyCode = async () => {
+    await signIn.mfa.verifyEmailCode({
+      code,
+    });
 
-  //     if (signUp.status === "complete") {
-  //       await signUp.finalize({
-  //         navigate: ({ decorateUrl }) => {
-  //           const url = decorateUrl("/");
-  //           router.replace(url as any);
-  //         },
-  //       });
-  //     }
-  //   };
+    if (signIn.status === "complete") {
+      await signIn.finalize({
+        navigate: ({ session, decorateUrl }) => {
+          if (session?.currentTask) {
+            return;
+          }
+          const url = decorateUrl("/");
+          router.replace(url as any);
+        },
+      });
+    }
+  };
 
-  //   if (
-  //     signUp.status === "missing_requirements" &&
-  //     signUp.unverifiedFields.includes("email_address") &&
-  //     signUp.missingFields.length === 0
-  //   ) {
-  //     return (
-  //       <View className="flex-1 justify-center px-6 py-12">
-  //         <Image
-  //           source={require("../../assets/images/kribb.png")}
-  //           className="w-32 h-16 mb-8"
-  //           resizeMode="contain"
-  //         />
-  //         <Text className="text-3xl font-bold mb-2 text-grey-800">
-  //           Verify your Account
-  //         </Text>
-  //         <Text className="mb-8 text-grey-500">We sent an code to {email}</Text>
-  //         <View className="flex-col gap-3 mb-4">
-  //           <TextInput
-  //             placeholder="Enter VerificationCode"
-  //             placeholderTextColor={"#ccc"}
-  //             className="flex-1 px-4 py-7 border rounded-xl border-[#ccc] color-black"
-  //             value={code}
-  //             keyboardType="number-pad"
-  //             onChangeText={(text) => setCode(text)}
-  //           />
-  //           {errors.fields.code && (
-  //             <Text className="text-red-500 mb-4">
-  //               {errors.fields.code.message}
-  //             </Text>
-  //           )}
-  //           <TouchableOpacity
-  //             disabled={isLoading}
-  //             onPress={onVerifyCode}
-  //             className="w-full bg-cyan-800 px-4 py-4 rounded-lg flex-col justify-center items-center"
-  //           >
-  //             {isLoading ? (
-  //               <ActivityIndicator />
-  //             ) : (
-  //               <Text className="text-white">Verfiy</Text>
-  //             )}
-  //           </TouchableOpacity>
-  //           <TouchableOpacity
-  //             disabled={isLoading}
-  //             onPress={() => signUp.verifications.sendEmailCode()}
-  //             className="py-2"
-  //           >
-  //             <Text className="text-blue-600">I need to send a new code</Text>
-  //           </TouchableOpacity>
-  //         </View>
-  //       </View>
-  //     );
-  //   }
+  if (signIn?.status === "needs_client_trust") {
+    return (
+      <View className="flex-1 justify-center px-6 py-12">
+        <Image
+          source={require("../../assets/images/kribb.png")}
+          className="w-32 h-16 mb-8"
+          resizeMode="contain"
+        />
+        <Text className="text-3xl font-bold mb-2 text-grey-800">
+          Verify your Account
+        </Text>
+        <Text className="mb-8 text-grey-500">We sent an code to {email}</Text>
+        <View className="flex-col gap-3 mb-4">
+          <TextInput
+            placeholder="Enter VerificationCode"
+            placeholderTextColor={"#ccc"}
+            className="flex-1 px-4 py-7 border rounded-xl border-[#ccc] color-black"
+            value={code}
+            keyboardType="number-pad"
+            onChangeText={(text) => setCode(text)}
+          />
+          {errors.fields.code && (
+            <Text className="text-red-500 mb-4">
+              {errors.fields.code.message}
+            </Text>
+          )}
+          <TouchableOpacity
+            disabled={isLoading}
+            onPress={onVerifyCode}
+            className="w-full bg-cyan-800 px-4 py-4 rounded-lg flex-col justify-center items-center"
+          >
+            {isLoading ? (
+              <ActivityIndicator />
+            ) : (
+              <Text className="text-white">Verfiy</Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            disabled={isLoading}
+            onPress={() => signIn.mfa.sendEmailCode()}
+            className="py-2"
+          >
+            <Text className="text-blue-600">I need to send a new code</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -150,7 +169,7 @@ export default function SignIn() {
         )}
         <TouchableOpacity
           disabled={isLoading}
-          //   onPress={onSignIn}
+          onPress={onSignIn}
           className="w-full bg-cyan-800 px-4 py-4 mb-4 rounded-lg flex-col justify-center items-center"
         >
           {isLoading ? (

@@ -61,9 +61,9 @@ export default function SignUp() {
   const isLoading = fetchStatus === "fetching";
 
   if (
-    signUp.status === "missing_requirements" &&
-    signUp.unverifiedFields.includes("email_address") &&
-    signUp.missingFields.length === 0
+    signUp?.status === "missing_requirements" &&
+    signUp?.unverifiedFields?.includes("email_address") &&
+    signUp?.missingFields?.length === 0
   ) {
     return (
       <View className="flex-1 justify-center px-6 py-12">
@@ -172,6 +172,7 @@ export default function SignUp() {
             {errors.fields.password.message}
           </Text>
         )}
+        <View nativeID="clerk-captcha" className="mb-4" />
         <TouchableOpacity
           disabled={isLoading}
           onPress={onSignUp}
