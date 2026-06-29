@@ -9,7 +9,7 @@ export default function RootLayout() {
 
   const isAdmin = userStore((state) => state.isAdmin);
 
-  useUserSync();
+  // useUserSync();
 
   if (!isLoaded) return null;
 

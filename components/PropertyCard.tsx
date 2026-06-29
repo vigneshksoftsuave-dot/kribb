@@ -7,12 +7,18 @@ export const PropertyCard = ({
   property,
   onUnSave,
   showSave = false,
+  isSaved = false,
 }: {
   property: Property;
   onUnSave?: () => void;
-  showSave?: Boolean;
+  showSave?: boolean;
+  isSaved?: boolean;
 }) => {
-  const isSaved = true;
+  const imageSource =
+    property.images.length > 0
+      ? { uri: property.images[0] }
+      : require("@/assets/images/kribb.png");
+
   return (
     <TouchableOpacity
       className="flex-row rounded-2xl overflow-hidden bg-white"
@@ -26,11 +32,7 @@ export const PropertyCard = ({
       }}
       //   onPress={() => router.push(`/(root)/(tabs)/property/${property.id}`)}
     >
-      <Image
-        source={{ uri: property.images[0] }}
-        className="w-28 h-28"
-        resizeMode="cover"
-      />
+      <Image source={imageSource} className="w-28 h-28" resizeMode="cover" />
       <View className="flex-1 p-3 justify-between">
         <View>
           <Text
@@ -61,22 +63,29 @@ export const PropertyCard = ({
               <Ionicons name="bed-outline" size={13} color="#6B7280" />
               <Text className="text-xs text-gray-500">{property.bedrooms}</Text>
             </View>
-            <View className="flex-row items-center gap-1">
-              <Ionicons name="expand-outline" size={13} color="#6B7280" />
-              <Text className="text-xs text-gray-500">
-                {property.area_sqft} ft2
-              </Text>
-            </View>
+            {property.area_sqft != null && (
+              <View className="flex-row items-center gap-1">
+                <Ionicons name="expand-outline" size={13} color="#6B7280" />
+                <Text className="text-xs text-gray-500">
+                  {property.area_sqft} ft2
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </View>
-      <TouchableOpacity className="w-10 items-center pt-3">
-        <Ionicons
-          name={isSaved ? "heart" : "heart-outline"}
-          size={18}
-          color={isSaved ? "#EF4444" : "#9CA#AF"}
-        />
-      </TouchableOpacity>
+      {showSave && (
+        <TouchableOpacity
+          className="w-10 items-center pt-3"
+          onPress={isSaved ? onUnSave : undefined}
+        >
+          <Ionicons
+            name={isSaved ? "heart" : "heart-outline"}
+            size={18}
+            color={isSaved ? "#EF4444" : "#9CA3AF"}
+          />
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 };
